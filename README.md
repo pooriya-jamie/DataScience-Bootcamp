@@ -7,3 +7,9 @@
 
 ### Week 2
   - Relational databases (MySQL)
+  - SoftSkill 
+
+### Week 3
+  - Git
+  - Statistics and Probability
+  - Graph Database (Neo4j)
