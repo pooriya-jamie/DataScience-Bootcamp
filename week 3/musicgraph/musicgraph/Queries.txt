@@ -1,0 +1,69 @@
+---------------------Creating Genre nodes--------------------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8EJjLgG9gQzhY9tJBAjtX2DQ2jcRHEmGbbJ7bnoSWJmdPcfaM4sv3g977xrnS0yaOcnuWjHhFYfht/pub?gid=1589070367&single=true&output=csv" AS row
+CREATE (:Genre {id: toInteger(row.id), name: row.genre_name})
+
+--------------Creating Artist nodes---------------------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJf_E1cCq_BBuixoxOENT0-kof7HO0xtIwYM0sjJ8sKVCGS7SR1fcRLynWaxBkkeMfsJREQ5bcOMDx/pub?gid=1704153960&single=true&output=csv" AS row
+CREATE (:Artist {id: toInteger(row.ArtistId), name: row.Name})
+
+
+----------Creating Album nodes and the RELEASED_BY relationship----------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxJjLQncFtIw7mnTpWAOSjTPDLfRluAzuLvuxGA-xV_KGaKuOxP9DJVp6e1dUhkDbClcTmUBUnFBvS/pub?gid=1971493174&single=true&output=csv" AS row
+CREATE (:Album {id: toInteger(row.AlbumId), title: row.Title})
+
+WITH *
+MATCH (a:Album), (artist:Artist)
+WHERE a.id = toInteger(row.ArtistId)
+CREATE (a)-[:RELEASED_BY]->(artist)
+
+
+---------------------Creating Customer nodes-----------------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0kWWOFgSzRkmJpUra7w_lj14PB3qUBa-UmYl7gEqWXLqJmabky_CyagyyDzDHG1hUIsXUjfrwrQXk/pub?gid=1429246036&single=true&output=csv" AS row
+CREATE (:Customer {id: toInteger(row.CustomerId), firstName: row.FirstName, lastName: row.LastName})
+
+----------------Creating MediaType nodes---------------------------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vSma8bQ5XbSyNTBfHqeUE03ciaauVPZOFMO1b_zsM6GRq8dvTXhd1Dcnw8cGNW751j_nTPGOlO_P5DC/pub?gid=1835960243&single=true&output=csv" AS row
+CREATE (:MediaType {id: toInteger(row.MediaTypeId), name: row.Name})
+
+--------------------Creating Playlist nodes-----------------------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vRzgcAVSxXDKp8PX9i84N-N9lU2yVoCC5F-lmThFGW1VFN6FfzS73puZjHkNMuhy8DJNvDABTMEjV3L/pub?gid=862808107&single=true&output=csv" AS row
+CREATE (:Playlist {id: toInteger(row.PlaylistId), name: row.Name})
+
+-------------------------Creating PlaylistTrack relationships-------------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vRJkJB4ZZoMUR2OdqUgDi_CVSI4bUddKiiUM-u0_hCEkZFYNMaYf7ihtyRodIBDWLOTzxWVxvuDZAYC/pub?gid=1968425609&single=true&output=csv" AS row
+MERGE (playlist:Playlist {id: toInteger(row.PlaylistId)})
+MERGE (track:Track {id: toInteger(row.TrackId)})
+CREATE (playlist)-[:INCLUDES]->(track)
+
+--------------------------Creating Invoice nodes and relationships-----------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vThOJjViTtSZ3iPx3NVunuVMNFP0niuBYsTcFOpfry-8B2r-cKPN-TTWpgduVFQnhIlXzmD1Ov-Ahoj/pub?gid=1377950831&single=true&output=csv" AS row
+CREATE (:Invoice {id: toInteger(row.InvoiceId), invoiceDate: row.InvoiceDate})
+WITH row
+MATCH (invoice:Invoice), (customer:Customer)
+WHERE invoice.id = toInteger(row.CustomerId)
+CREATE (invoice)-[:ISSUED_TO]->(customer)
+
+--------------------------------Creating InvoiceLine relationships---------
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_h8R_KRSQV4QkvKOgyCzQqgeh2Dj5yja7QzDINA8cQyXKqZt7siDmYGBvMcGLR4T7cE78XMBqhLvv/pub?gid=686483148&single=true&output=csv" AS row
+MERGE (invoice:Invoice {id: toInteger(row.InvoiceId)})
+MERGE (track:Track {id: toInteger(row.TrackId)})
+CREATE (invoice)-[:INCLUDES_TRACK]->(track)
+
+---------------------Creating Track nodes and relationships-------------
+
+LOAD CSV WITH HEADERS FROM "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLwih8CQVwEk8AkqC3Rkh3L0WMilYydgMuSsbaiZKCz40r2Y9Kmze9KJXTdXrt73coddmq2rXxQ2i6/pub?gid=1988917154&single=true&output=csv" AS row
+CREATE (:Track {id: toInteger(row.TrackId), name: row.Name})
+WITH row
+
+MATCH (t:Track), (album:Album)
+WHERE t.id = toInteger(row.AlbumId)
+CREATE (t)-[:INCLUDED_IN_ALBUM]->(album)
+
+MATCH (t:Track), (mediaType:MediaType)
+WHERE t.id = toInteger(row.MediaTypeId)
+CREATE (t)-[:HAS_MEDIA_TYPE]->(mediaType)
+
+MATCH (t:Track), (genre:Genre)
+WHERE t.id = toInteger(row.GenreId)
+CREATE (t)-[:BELONGS_TO_GENRE]->(genre)
+
