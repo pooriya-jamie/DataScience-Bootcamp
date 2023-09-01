@@ -1,0 +1,88 @@
+--------------- Query 1 --------------------
+CREATE (query1:Transfer {
+    playerName: 'Neymar',
+    playerPosition: 'Left Winger',
+    season: '2023/2024',
+    transferFee: 90000000,
+    playerNationality: 'Brazil',
+    buyerClubName: 'Al Hilal'
+})
+
+
+--------------- Query 2 --------------------
+MATCH (query2:Transfer)
+WHERE query2.sellerClubName = 'AC Milan'
+RETURN query2.playerName AS playerName,
+       query2.playerPosition as playerPosition,
+       query2.season AS transferSeason,
+       query2.transferFee AS transferFee,
+       query2.buyerClubName AS buyerClubName
+ORDER BY query2.season
+
+
+--------------- Query 3 --------------------
+MATCH (query3:Transfer)
+WHERE query3.buyerClubName = 'Real Madrid'
+WITH query3.playerPosition AS position,
+    COUNT(query3) AS totalPlayers, 
+    SUM(query3.transferFee) AS transferFee
+RETURN position, totalPlayers, transferFee
+ORDER BY position
+
+
+--------------- Query 4 --------------------
+MATCH(query4:Transfer)
+WHERE query4.playerName STARTS WITH 'Stefan'
+    AND NOT query4.playerNationality = 'Serbia'
+    AND query4.season CONTAINS '2015'
+RETURN query4.playerName AS playerName, 
+    query4.playerPosition AS playerPosition,
+    query4.season AS season, 
+    query4.transferFee AS transferFee, 
+    query4.sellerClubName AS FromClub,
+    query4.buyerClubName AS ToClub
+
+
+--------------- Query 5 --------------------
+MATCH (query5:Transfer)
+WHERE query5.transferFee IS NOT NULL
+RETURN query5.playerName AS playerName,
+       query5.playerPosition AS playerPosition, 
+       query5.season AS season,
+       query5.transferFee AS transferFee,
+       query5.sellerClubName AS FromClub,
+       query5.buyerClubName AS ToClub
+ORDER BY query5.transferFee DESC
+LIMIT 10
+
+
+--------------- Query 6 --------------------
+MATCH (query6:Transfer)
+WITH query6.buyerClubName AS clubName, 
+     query6.season AS season,
+     SUM(query6.transferFee) AS totalTransferCost,
+     COUNT(query6) AS numberOfPlayers
+RETURN clubName, season,
+       totalTransferCost / numberOfPlayers AS averageCost
+ORDER BY averageCost DESC
+
+
+--------------- Query 7 --------------------
+MATCH (query7:Transfer)
+WITH query7.playerName AS playerName, query7.season AS season,
+     collect(query7.transferFee) AS transferValues,
+     collect(query7.sellerClubName) AS originClubs,
+     collect(query7.buyerClubName) AS destinationClubs,
+     COUNT(query7) AS numberOfTransfers
+WHERE numberOfTransfers > 1
+RETURN playerName, season, transferValues, originClubs, destinationClubs
+
+
+--------------- Query 8 --------------------
+MATCH (query8:Transfer)
+WITH query8.buyerClubName AS clubName, query8.playerNationality AS nationality, COUNT(query8) AS numberOfPlayers
+ORDER BY clubName, numberOfPlayers DESC
+WITH clubName, COLLECT({ nationality: nationality, numberOfPlayers: numberOfPlayers }) AS nationalities
+WITH clubName, HEAD(nationalities) AS mostPopularNationality
+RETURN clubName, mostPopularNationality.nationality AS popularNationality, mostPopularNationality.numberOfPlayers AS numberOfPurchases
+ORDER BY numberOfPurchases DESC
